@@ -1,0 +1,161 @@
+<?php
+
+$class = isset($_GET['class']) ? $_GET['class'] : "deathknight";
+$uiclass = ($class == 'deathknight') ? $uiclass = "Death Knight" : ucfirst($class);
+$talents = isset($_GET['tal']) ? $_GET['tal'] : false;
+$classes = array("deathknight","druid","hunter","mage","paladin","priest","rogue","shaman","warlock","warrior");
+
+$menu = '';
+foreach($classes as $mclass) {
+ $selected = ($mclass == $class) ? 'selected' : '';
+ $menu .= "<a class=\"$mclass-bd $selected\" href=\"$mclass\"><img src=\"/warcraft/talents/img/$mclass/icon.png\" /></a>\r\n";
+}
+
+?>
+
+<!doctype html>
+<html lang="en-us">
+
+<head>
+<title><?=$uiclass?> Talents | Adventure WoW | A TrinityCore Private Server</title>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <base href="/warcraft/talents/">
+ <link type="text/css" rel="stylesheet" href="/system/bones.css" />
+ <link type="text/css" rel="stylesheet" href="../system/style.css" />
+ <script src="https://kit.fontawesome.com/666b0b7246.js" crossorigin="anonymous"></script>
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+ <script>
+ $(document).ready(function() {
+
+  $('.talents').each(function() {
+   let treeclass = $(this).data('class');
+   let treespec = $(this).data('spec');
+   $(this).css('background-image', `url(/warcraft/talents/img/${treeclass}/${treespec}/background.png)`);
+  });
+
+  function copyToClipboard(code,text) {
+   let copy = 'http://yourdomain.com/warcraft/talents/'+text+'/'+code+'/';
+   navigator.clipboard.writeText(copy).then(() => console.log('Text copied to clipboard')).catch(err => console.error('Error in copying text: ', err));
+  }
+  
+  $('#copyURL').click(function() {
+   let urlclass = $(this).data("class");
+   let urlcode = $(this).data("code");
+   alert("Build address copied to clipboard.");
+   copyToClipboard(urlcode,urlclass);
+  });
+
+  $(document).on('click', '.deletebuild', function() {
+    let code = $(this).data("code");
+    if(confirm("Are you sure you want to delete this build?")) { ajaxCall('ajax.php', 'POST', { deleteCode: code }).done(data => updateBuilds(data, "mage")); }
+  });
+
+  function updateBuilds(data, classFilter = null) {
+   let filteredData = classFilter ? data.filter(item => item.class === classFilter) : data;
+   $('#replaceMeWithBuilds').html(
+    filteredData.map(item => '<div class="build '+item.class+'"><img class="bigicon" src="img/'+item.class+'/icon.png" /><p><span class="float-right"><span class="small gray font-bolder">('+item.date+')</span> <i class="deletebuild link fa-solid fa-trash-can" data-code="'+item.url+'"></i></span><a class="ucfirst" href="'+item.class+'/'+item.url+'">'+item.title+'</a></p></div>')
+    .join('')
+   );
+  }
+
+  function ajaxCall(url, type, data = {}) {
+   return $.ajax({ url: url, type: type, dataType: 'json', cache: false, data: { ...data, '_': new Date().getTime() } });
+  }
+
+  $('#saveBuild').click(function() {
+   let theTitle = prompt("Give your build a name. Class information not needed.");
+   let theClass = $(this).data("class");
+   let theCode = $(this).data("code");
+   if(theTitle) {
+    ajaxCall('ajax.php', 'POST', { theTitle, theClass, theCode }).done(function(response) {
+     if(response.exists) { alert("A build with this code already exists: " + response.title); }
+     else { updateBuilds(response, theClass); }
+    });
+   }
+  });
+
+  ajaxCall('ajax.php', 'GET').done(data => updateBuilds(data, "<?=$class?>"));
+  
+ });
+ </script>
+</head>
+
+<body><div id="body">
+
+<img id="logo" src="../system/img/logo.png" />
+
+<div class="classmenu">
+<?=$menu?>
+</div>
+
+<div class="clearbox padding-none">
+<h2>Talent Calculator</h2>
+<div id="replaceMeWithTalents"></div>
+</div>
+
+<div class="clearbox padding-none">
+<h2 id="savedheader">Saved Builds</h2>
+<div class="buildmenu" id="replaceMeWithBuilds"></div>
+</div>
+
+<script type="text/javascript">
+var uiClassName = "<?=$uiclass?>";
+var pageId = "<?=$class?>";
+var urltalents = "<?=$talents?>";
+var theURLtoCopy = "<?=$class?>/";
+var talent = new Array();
+var rank = new Array();
+var tree = new Array();
+var nltree = new Array();
+var nltalent = new Array();
+var rankBottom = new Array();
+var minLevel = new Array();
+var hasDependentTalents = new Array();
+var treeStartStop = new Array();
+var rankTop = new Array();
+var pointsTree = new Array();
+var maxTierArray = new Array();
+maxTierArray[0] = 1;
+maxTierArray[1] = 1;
+maxTierArray[2] = 1;
+var template = new Array();
+var levelMax = 80;
+var levelMin = 10;
+var tierNum = 11;
+var rankPointsMax = 142;
+var rankPoints = rankPointsMax;
+var levelCurrent = levelMax;
+var theRequiredLevel = levelMin - 1;
+var lg = "/en"; // Example: /en
+var imgPath = "";
+var pixelGif = "shared/wow-com/images/layout/pixel.gif";
+var textLevelRequired = "Level Required:";
+var textPointsLeft = "Points Left:";
+var textPointsSpent = "Points Spent:";
+var textPoint = "point";
+var textPoints = "points";
+var textLeftClick = "Left Click to Learn"
+var textRightClick = "Right Click to Unlearn"
+var textRankColon = "Rank:"
+var textNextRank = "Next Rank:";
+var requiresRequires = "Requires";
+var requiresPointsIn = "points in";
+var requiresTalents = "Talents";
+function calculateRequiredLevel(rankPoints) {
+ var pointsSpent = rankPointsMax - rankPoints;
+ if (pointsSpent <= 0) { return levelMin - 1; }
+ else if (pointsSpent >= rankPointsMax - 1) { return levelMax; }
+ else { return levelMin + Math.floor((pointsSpent - 1) / 2); }
+}
+$(document).ajaxComplete(function() {
+ $('#savedheader').toggle($('.build').length > 0);
+});
+</script>
+<script type="text/javascript" src="js/functions.js"></script>
+<script type="text/javascript" src="js/<?=$class?>.js"></script>
+<script type="text/javascript" src="js/<?=$class?>.nl.js"></script>
+<script type="text/javascript" src="js/arrays.js"></script>
+<script type="text/javascript" src="js/output.js"></script>
+</body>
+</html>

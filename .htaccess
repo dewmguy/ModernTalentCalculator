@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase /warcraft/talents/
+RewriteCond %{REQUEST_URI} !/ajax.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/warcraft/talents/index.html$
+RewriteRule ^([^/]+)/?$ index.html?class=$1 [L,QSA]
+RewriteRule ^([^/]+)/([a-zA-Z0-9]+)/?$ index.html?class=$1&tal=$2 [L,QSA]
